@@ -488,47 +488,43 @@ def build_feature_network(features, config):
   return new_feats
 
 
-def bifpn_sum_config():
+def bifpn_config(weight_method='fastattn',quad_method='sum'):
   """BiFPN config with sum."""
   p = hparams_config.Config()
+  p.weight_method = weight_method or 'fastattn'
+  p.quad_method = quad_method or 'sum'
   p.nodes = [
-      {'feat_level': 6, 'inputs_offsets': [3, 4]},
-      {'feat_level': 5, 'inputs_offsets': [2, 5]},
-      {'feat_level': 4, 'inputs_offsets': [1, 6]},
-      {'feat_level': 3, 'inputs_offsets': [0, 7]},
-      {'feat_level': 4, 'inputs_offsets': [1, 7, 8]},
-      {'feat_level': 5, 'inputs_offsets': [2, 6, 9]},
-      {'feat_level': 6, 'inputs_offsets': [3, 5, 10]},
-      {'feat_level': 7, 'inputs_offsets': [4, 11]},
-      {'feat_level': 4, 'inputs_offsets': [0, 1]},
-      {'feat_level': 5, 'inputs_offsets': [2, 13]},
-      {'feat_level': 6, 'inputs_offsets': [3, 14]},
-      {'feat_level': 7, 'inputs_offsets': [4, 15]},
-      {'feat_level': 6, 'inputs_offsets': [3, 15, 16]},
-      {'feat_level': 5, 'inputs_offsets': [2, 14, 17]},
-      {'feat_level': 4, 'inputs_offsets': [1, 13, 18]},
-      {'feat_level': 3, 'inputs_offsets': [0, 19]},
-      {'feat_level': 7, 'inputs_offsets': [12, 16]},
-      {'feat_level': 6, 'inputs_offsets': [11, 17]},
-      {'feat_level': 5, 'inputs_offsets': [10, 18]},
-      {'feat_level': 4, 'inputs_offsets': [9, 19]},
-      {'feat_level': 3, 'inputs_offsets': [8, 20]},
+      {'feat_level': 6, 'inputs_offsets': [3, 4] , 'weight_method': p.weight_method},
+      {'feat_level': 5, 'inputs_offsets': [2, 5], 'weight_method': p.weight_method},
+      {'feat_level': 4, 'inputs_offsets': [1, 6], 'weight_method': p.weight_method},
+      {'feat_level': 3, 'inputs_offsets': [0, 7], 'weight_method': p.weight_method},
+      {'feat_level': 4, 'inputs_offsets': [1, 7, 8], 'weight_method': p.weight_method},
+      {'feat_level': 5, 'inputs_offsets': [2, 6, 9], 'weight_method': p.weight_method},
+      {'feat_level': 6, 'inputs_offsets': [3, 5, 10], 'weight_method': p.weight_method},
+      {'feat_level': 7, 'inputs_offsets': [4, 11], 'weight_method': p.weight_method},
+      {'feat_level': 4, 'inputs_offsets': [0, 1], 'weight_method': p.weight_method},
+      {'feat_level': 5, 'inputs_offsets': [2, 13], 'weight_method': p.weight_method},
+      {'feat_level': 6, 'inputs_offsets': [3, 14], 'weight_method': p.weight_method},
+      {'feat_level': 7, 'inputs_offsets': [4, 15], 'weight_method': p.weight_method},
+      {'feat_level': 6, 'inputs_offsets': [3, 15, 16], 'weight_method': p.weight_method},
+      {'feat_level': 5, 'inputs_offsets': [2, 14, 17], 'weight_method': p.weight_method},
+      {'feat_level': 4, 'inputs_offsets': [1, 13, 18], 'weight_method': p.weight_method},
+      {'feat_level': 3, 'inputs_offsets': [0, 19], 'weight_method': p.weight_method},
+      {'feat_level': 7, 'inputs_offsets': [12, 16], 'weight_method': p.quad_method},
+      {'feat_level': 6, 'inputs_offsets': [11, 17], 'weight_method': p.quad_method},
+      {'feat_level': 5, 'inputs_offsets': [10, 18], 'weight_method': p.quad_method},
+      {'feat_level': 4, 'inputs_offsets': [9, 19], 'weight_method': p.quad_method},
+      {'feat_level': 3, 'inputs_offsets': [8, 20], 'weight_method': p.quad_method},
   ]
-  p.weight_method = 'sum'
   return p
 
 
-def bifpn_fa_config():
-  """BiFPN config with fast weighted sum."""
-  p = bifpn_sum_config()
-  p.weight_method = 'fastattn'
-  return p
 
-
-def bifpn_dynamic_config(min_level, max_level, weight_method):
+def bifpn_dynamic_config(min_level, max_level, weight_method,quad_method):
   """A dynamic bifpn config that can adapt to different min/max levels."""
   p = hparams_config.Config()
   p.weight_method = weight_method or 'fastattn'
+  p.quad_method = quad_method or 'sum'
 
   # Node id starts from the input features and monotonically increase whenever
   # a new node is added. Here is an example for level P3 - P7:
@@ -561,7 +557,8 @@ def bifpn_dynamic_config(min_level, max_level, weight_method):
     # top-down path.
     p.nodes.append({
         'feat_level': i,
-        'inputs_offsets': [level_last_id(i), level_last_id(i + 1)]
+        'inputs_offsets': [level_last_id(i), level_last_id(i + 1)],
+        'weight_method': p.weight_method
     })
     node_ids[i].append(next(id_cnt))
   node_ids[max_level].append(node_ids[max_level][-1])
@@ -570,13 +567,15 @@ def bifpn_dynamic_config(min_level, max_level, weight_method):
     # bottom-up path.
     p.nodes.append({
         'feat_level': i,
-        'inputs_offsets': level_all_ids(i) + [level_last_id(i - 1)]
+        'inputs_offsets': level_all_ids(i) + [level_last_id(i - 1)],
+        'weight_method': p.weight_method
     })
     node_ids[i].append(next(id_cnt))
   i=max_level
   p.nodes.append({
       'feat_level': i,
-      'inputs_offsets': [level_first_id(i)] + [level_last_id(i - 1)]
+      'inputs_offsets': [level_first_id(i)] + [level_last_id(i - 1)],
+      'weight_method': p.weight_method
   })
   node_ids[i].append(next(id_cnt))
   node_ids[min_level].append(node_ids[min_level][-1])
@@ -590,7 +589,8 @@ def bifpn_dynamic_config(min_level, max_level, weight_method):
     # down-top path.
     p.nodes.append({
         'feat_level': i,
-        'inputs_offsets': [level_first_id(i), level_last_id(i - 1) if i != min_level+1 else level_first_id(i - 1)]
+        'inputs_offsets': [level_first_id(i), level_last_id(i - 1) if i != min_level+1 else level_first_id(i - 1)],
+        'weight_method': p.weight_method
     })
     node_ids[i].append(next(id_cnt))
   node_ids[min_level].append(node_ids[min_level][-1])
@@ -599,13 +599,15 @@ def bifpn_dynamic_config(min_level, max_level, weight_method):
     # up-bottom path.
     p.nodes.append({
         'feat_level': i,
-        'inputs_offsets': [node_ids[i][0]] + [node_ids[i][-1]] + [level_last_id(i + 1)]
+        'inputs_offsets': [node_ids[i][0]] + [node_ids[i][-1]] + [level_last_id(i + 1)],
+        'weight_method': p.weight_method
     })
     node_ids[i].append(next(id_cnt))
   i=min_level
   p.nodes.append({
       'feat_level': i,
-      'inputs_offsets': [node_ids[i][0]] + [level_last_id(i + 1)]
+      'inputs_offsets': [node_ids[i][0]] + [level_last_id(i + 1)],
+      'weight_method': p.weight_method
   })
   node_ids[i].append(next(id_cnt))
   node_ids[max_level].append(node_ids[max_level][-1])
@@ -615,21 +617,22 @@ def bifpn_dynamic_config(min_level, max_level, weight_method):
     # quad-add path.
     p.nodes.append({
         'feat_level': i,
-        'inputs_offsets':[node_ids[i][2], node_ids[i][4]]
+        'inputs_offsets':[node_ids[i][2], node_ids[i][4]],
+        'weight_method': p.quad_method
     })
     node_ids[i].append(next(id_cnt))
 
   return p
 
 
-def get_fpn_config(fpn_name, min_level, max_level, weight_method):
+def get_fpn_config(fpn_name, min_level, max_level, weight_method,quad_method):
   """Get fpn related configuration."""
   if not fpn_name:
     fpn_name = 'bifpn_fa'
   name_to_config = {
-      'bifpn_sum': bifpn_sum_config(),
-      'bifpn_fa': bifpn_fa_config(),
-      'bifpn_dyn': bifpn_dynamic_config(min_level, max_level, weight_method)
+      'bifpn_sum': bifpn_config('sum',quad_method),
+      'bifpn_fa': bifpn_config('fastattn',quad_method),
+      'bifpn_dyn': bifpn_dynamic_config(min_level, max_level, weight_method,quad_method)
   }
   return name_to_config[fpn_name]
 
@@ -641,7 +644,7 @@ def build_bifpn_layer(feats, feat_sizes, config):
     fpn_config = p.fpn_config
   else:
     fpn_config = get_fpn_config(p.fpn_name, p.min_level, p.max_level,
-                                p.fpn_weight_method)
+                                p.fpn_weight_method,p.fpn_quad_method)
 
   num_output_connections = [0 for _ in feats]
   for i, fnode in enumerate(fpn_config.nodes):
@@ -665,13 +668,13 @@ def build_bifpn_layer(feats, feat_sizes, config):
 
       # Combine all nodes.
       dtype = nodes[0].dtype
-      if fpn_config.weight_method == 'attn':
+      if fnode['weight_method'] == 'attn':
         edge_weights = [tf.cast(tf.Variable(1.0, name='WSM'), dtype=dtype)
                         for _ in range(len(fnode['inputs_offsets']))]
         normalized_weights = tf.nn.softmax(tf.stack(edge_weights))
         nodes = tf.stack(nodes, axis=-1)
         new_node = tf.reduce_sum(tf.multiply(nodes, normalized_weights), -1)
-      elif fpn_config.weight_method == 'fastattn':
+      elif fnode['weight_method'] == 'fastattn':
         edge_weights = [
             tf.nn.relu(tf.cast(tf.Variable(1.0, name='WSM'), dtype=dtype))
             for _ in range(len(fnode['inputs_offsets']))
@@ -680,7 +683,7 @@ def build_bifpn_layer(feats, feat_sizes, config):
         nodes = [nodes[i] * edge_weights[i] / (weights_sum + 0.0001)
                  for i in range(len(nodes))]
         new_node = tf.add_n(nodes)
-      elif fpn_config.weight_method == 'sum':
+      elif fnode['weight_method'] == 'sum':
         new_node = tf.add_n(nodes)
       else:
         raise ValueError(
