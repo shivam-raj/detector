@@ -188,6 +188,7 @@ def default_detection_configs():
   h.fpn_name = None
   h.fpn_weight_method = None
   h.fpn_config = None
+  h.fpn_quad_method = None
 
   # No stochastic depth in default.
   h.survival_prob = None
