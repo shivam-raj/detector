@@ -38,6 +38,11 @@ flags.DEFINE_string(
     help='The Cloud TPU to use for training. This should be either the name '
     'used when creating the Cloud TPU, or a grpc://ip.address.of.tpu:8470 '
     'url.')
+flags.DEFINE_list(
+    'tpus', default=None,
+    help='The Cloud TPU to use for training. This should be either the name '
+    'used when creating the Cloud TPU, or a grpc://ip.address.of.tpu:8470 '
+    'url.')
 flags.DEFINE_string(
     'gcp_project', default=None,
     help='Project name for the Cloud TPU-enabled project. If not specified, we '
@@ -120,7 +125,7 @@ def main(argv):
 
   if FLAGS.use_tpu:
     tpu_cluster_resolver = tf.distribute.cluster_resolver.TPUClusterResolver(
-        FLAGS.tpu,
+        FLAGS.tpus,
         zone=FLAGS.tpu_zone,
         project=FLAGS.gcp_project)
     tpu_grpc_url = tpu_cluster_resolver.get_master()
