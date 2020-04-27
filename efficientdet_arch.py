@@ -467,7 +467,8 @@ def build_feature_network(features, config):
       data_format=config.data_format)
 
   with tf.variable_scope('fpn_cells'):
-    for rep in range(config.fpn_cell_repeats):
+    repeats=config.fpn_cell_repeats //2 + 1
+    for rep in range(repeats):
       with tf.variable_scope('cell_{}'.format(rep)):
         logging.info('building cell %d', rep)
         new_feats = build_bifpn_layer(feats, feat_sizes, config)
