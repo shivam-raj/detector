@@ -24,7 +24,7 @@ from __future__ import division
 from __future__ import print_function
 
 import functools
-import itertools
+from itertools import count
 from absl import logging
 import numpy as np
 import tensorflow.compat.v1 as tf
@@ -420,6 +420,85 @@ def build_backbone(features, config):
   return {0: features, 1: u1, 2: u2, 3: u3, 4: u4, 5: u5}
 
 
+def build_fpn(nodes,ends,id):
+    i3, i4, i5, i6, i7 = 0, 1, 2, 3, 4
+    m6 = next(id)
+    nodes.append({
+        'feat_level': 6,
+        'inputs_offsets': [i6, i7]
+    })
+
+    m5 = next(id)
+    nodes.append({
+        'feat_level': 5,
+        'inputs_offsets': [m6, i5]
+    })
+
+    m4 = next(id)
+    nodes.append({
+        'feat_level': 4,
+        'inputs_offsets': [m5, i4]
+    })
+
+    o3 = next(id)
+    ends['3'].append(o3)
+    nodes.append({
+        'feat_level': 3,
+        'inputs_offsets': [m4, i3]
+    })
+
+    o4 = next(id)
+    ends['4'].append(o4)
+    nodes.append({
+        'feat_level': 4,
+        'inputs_offsets': [m4, o3, i4]
+    })
+
+    o5 = next(id)
+    ends['5'].append(o5)
+    nodes.append({
+        'feat_level': 5,
+        'inputs_offsets': [m5, o4, i5]
+    })
+
+    o6 = next(id)
+    ends['6'].append(o6)
+    nodes.append({
+        'feat_level': 6,
+        'inputs_offsets': [m6, o5, i6]
+    })
+
+    o7 = next(id)
+    ends['7'].append(o7)
+    nodes.append({
+        'feat_level': 7,
+        'inputs_offsets': [o6, i7]
+    })
+
+
+def connect_fpn(nodes, ends):
+    nodes.append({
+        'feat_level': 3,
+        'inputs_offsets': ends['3']
+    })
+    nodes.append({
+        'feat_level': 4,
+        'inputs_offsets': ends['4']
+    })
+    nodes.append({
+        'feat_level': 5,
+        'inputs_offsets': ends['5']
+    })
+    nodes.append({
+        'feat_level': 6,
+        'inputs_offsets': ends['6']
+    })
+    nodes.append({
+        'feat_level': 7,
+        'inputs_offsets': ends['7']
+    })
+
+
 def build_feature_network(features, config):
   """Build FPN input features.
 
@@ -467,182 +546,44 @@ def build_feature_network(features, config):
       data_format=config.data_format)
 
   with tf.variable_scope('fpn_cells'):
-    for rep in range(config.fpn_cell_repeats):
-      with tf.variable_scope('cell_{}'.format(rep)):
-        logging.info('building cell %d', rep)
-        new_feats = build_bifpn_layer(feats, feat_sizes, config)
+    nodes = list()
+    id = count(5)
 
-        feats = [
-            new_feats[level]
-            for level in range(
-                config.min_level, config.max_level + 1)
-        ]
+    ends = {
+        '3': [0],
+        '4': [1],
+        '5': [2],
+        '6': [3],
+        '7': [4]
+    }
 
-        _verify_feats_size(
-            feats,
-            feat_sizes=feat_sizes,
-            min_level=config.min_level,
-            max_level=config.max_level,
-            data_format=config.data_format)
+    for _ in range(config.fpn_cell_repeats):
+        build_fpn(nodes,ends,id)
+    connect_fpn(nodes,ends)
+
+    p = hparams_config.Config()
+    p.nodes =nodes
+    p.weight_method = 'fastattn'
+
+    new_feats = build_bifpn_layer(feats, feat_sizes, config,p)
+
+    feats = [new_feats[level] for level in range(config.min_level, config.max_level + 1)]
+
+    _verify_feats_size(
+        feats,
+        feat_sizes=feat_sizes,
+        min_level=config.min_level,
+        max_level=config.max_level,
+        data_format=config.data_format)
 
   return new_feats
 
 
-def bifpn_sum_config():
-  """BiFPN config with sum."""
-  p = hparams_config.Config()
-  p.nodes = [
-      {'feat_level': 6, 'inputs_offsets': [3, 4]},
-      {'feat_level': 5, 'inputs_offsets': [2, 5]},
-      {'feat_level': 4, 'inputs_offsets': [1, 6]},
-      {'feat_level': 3, 'inputs_offsets': [0, 7]},
-      {'feat_level': 4, 'inputs_offsets': [1, 7, 8]},
-      {'feat_level': 5, 'inputs_offsets': [2, 6, 9]},
-      {'feat_level': 6, 'inputs_offsets': [3, 5, 10]},
-      {'feat_level': 7, 'inputs_offsets': [4, 11]},
-      {'feat_level': 4, 'inputs_offsets': [0, 1]},
-      {'feat_level': 5, 'inputs_offsets': [2, 13]},
-      {'feat_level': 6, 'inputs_offsets': [3, 14]},
-      {'feat_level': 7, 'inputs_offsets': [4, 15]},
-      {'feat_level': 6, 'inputs_offsets': [3, 15, 16]},
-      {'feat_level': 5, 'inputs_offsets': [2, 14, 17]},
-      {'feat_level': 4, 'inputs_offsets': [1, 13, 18]},
-      {'feat_level': 3, 'inputs_offsets': [0, 19]},
-      {'feat_level': 7, 'inputs_offsets': [12, 16]},
-      {'feat_level': 6, 'inputs_offsets': [11, 17]},
-      {'feat_level': 5, 'inputs_offsets': [10, 18]},
-      {'feat_level': 4, 'inputs_offsets': [9, 19]},
-      {'feat_level': 3, 'inputs_offsets': [8, 20]},
-  ]
-  p.weight_method = 'sum'
-  return p
 
 
-def bifpn_fa_config():
-  """BiFPN config with fast weighted sum."""
-  p = bifpn_sum_config()
-  p.weight_method = 'fastattn'
-  return p
-
-
-def bifpn_dynamic_config(min_level, max_level, weight_method):
-  """A dynamic bifpn config that can adapt to different min/max levels."""
-  p = hparams_config.Config()
-  p.weight_method = weight_method or 'fastattn'
-
-  # Node id starts from the input features and monotonically increase whenever
-  # a new node is added. Here is an example for level P3 - P7:
-  #     P7 (4)              P7" (12)
-  #     P6 (3)    P6' (5)   P6" (11)
-  #     P5 (2)    P5' (6)   P5" (10)
-  #     P4 (1)    P4' (7)   P4" (9)
-  #     P3 (0)              P3" (8)
-  # So output would be like:
-  # [
-  #   {'feat_level': 6, 'inputs_offsets': [3, 4]},  # for P6'
-  #   {'feat_level': 5, 'inputs_offsets': [2, 5]},  # for P5'
-  #   {'feat_level': 4, 'inputs_offsets': [1, 6]},  # for P4'
-  #   {'feat_level': 3, 'inputs_offsets': [0, 7]},  # for P3"
-  #   {'feat_level': 4, 'inputs_offsets': [1, 7, 8]},  # for P4"
-  #   {'feat_level': 5, 'inputs_offsets': [2, 6, 9]},  # for P5"
-  #   {'feat_level': 6, 'inputs_offsets': [3, 5, 10]},  # for P6"
-  #   {'feat_level': 7, 'inputs_offsets': [4, 11]},  # for P7"
-  # ]
-  num_levels = max_level - min_level + 1
-  node_ids = {min_level + i: [i] for i in range(num_levels)}
-
-  level_last_id = lambda level: node_ids[level][-1]
-  level_all_ids = lambda level: node_ids[level]
-  level_first_id = lambda level: node_ids[level][0]
-  id_cnt = itertools.count(num_levels)
-
-  p.nodes = []
-  for i in range(max_level - 1, min_level - 1, -1):
-    # top-down path.
-    p.nodes.append({
-        'feat_level': i,
-        'inputs_offsets': [level_last_id(i), level_last_id(i + 1)]
-    })
-    node_ids[i].append(next(id_cnt))
-  node_ids[max_level].append(node_ids[max_level][-1])
-
-  for i in range(min_level + 1, max_level):
-    # bottom-up path.
-    p.nodes.append({
-        'feat_level': i,
-        'inputs_offsets': level_all_ids(i) + [level_last_id(i - 1)]
-    })
-    node_ids[i].append(next(id_cnt))
-  i=max_level
-  p.nodes.append({
-      'feat_level': i,
-      'inputs_offsets': [level_first_id(i)] + [level_last_id(i - 1)]
-  })
-  node_ids[i].append(next(id_cnt))
-  node_ids[min_level].append(node_ids[min_level][-1])
-
-
-
-#############  QuadFPN Config #############
-
-
-  for i in range(min_level + 1, max_level + 1, 1):
-    # down-top path.
-    p.nodes.append({
-        'feat_level': i,
-        'inputs_offsets': [level_first_id(i), level_last_id(i - 1) if i != min_level+1 else level_first_id(i - 1)]
-    })
-    node_ids[i].append(next(id_cnt))
-  node_ids[min_level].append(node_ids[min_level][-1])
-
-  for i in range(max_level -1, min_level , -1):
-    # up-bottom path.
-    p.nodes.append({
-        'feat_level': i,
-        'inputs_offsets': [node_ids[i][0]] + [node_ids[i][-1]] + [level_last_id(i + 1)]
-    })
-    node_ids[i].append(next(id_cnt))
-  i=min_level
-  p.nodes.append({
-      'feat_level': i,
-      'inputs_offsets': [node_ids[i][0]] + [level_last_id(i + 1)]
-  })
-  node_ids[i].append(next(id_cnt))
-  node_ids[max_level].append(node_ids[max_level][-1])
-
-
-  for i in range(max_level, min_level - 1, -1):
-    # quad-add path.
-    p.nodes.append({
-        'feat_level': i,
-        'inputs_offsets':[node_ids[i][2], node_ids[i][4]]
-    })
-    node_ids[i].append(next(id_cnt))
-
-  return p
-
-
-def get_fpn_config(fpn_name, min_level, max_level, weight_method):
-  """Get fpn related configuration."""
-  if not fpn_name:
-    fpn_name = 'bifpn_fa'
-  name_to_config = {
-      'bifpn_sum': bifpn_sum_config(),
-      'bifpn_fa': bifpn_fa_config(),
-      'bifpn_dyn': bifpn_dynamic_config(min_level, max_level, weight_method)
-  }
-  return name_to_config[fpn_name]
-
-
-def build_bifpn_layer(feats, feat_sizes, config):
+def build_bifpn_layer(feats, feat_sizes, config,cone):
   """Builds a feature pyramid given previous feature pyramid and config."""
-  p = config  # use p to denote the network config.
-  if p.fpn_config:
-    fpn_config = p.fpn_config
-  else:
-    fpn_config = get_fpn_config(p.fpn_name, p.min_level, p.max_level,
-                                p.fpn_weight_method)
-
+  fpn_config=cone
   num_output_connections = [0 for _ in feats]
   for i, fnode in enumerate(fpn_config.nodes):
     with tf.variable_scope('fnode{}'.format(i)):
