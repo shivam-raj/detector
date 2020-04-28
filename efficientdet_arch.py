@@ -550,11 +550,11 @@ def build_feature_network(features, config):
     id = count(5)
 
     ends = {
-        '3': [0],
-        '4': [1],
-        '5': [2],
-        '6': [3],
-        '7': [4]
+        '3': list(),
+        '4': list(),
+        '5': list(),
+        '6': list(),
+        '7': list()
     }
 
     for _ in range(config.fpn_cell_repeats):
