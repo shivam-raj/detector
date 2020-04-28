@@ -583,6 +583,7 @@ def build_feature_network(features, config):
 
 def build_bifpn_layer(feats, feat_sizes, config,cone):
   """Builds a feature pyramid given previous feature pyramid and config."""
+  p = config
   fpn_config=cone
   num_output_connections = [0 for _ in feats]
   for i, fnode in enumerate(fpn_config.nodes):
