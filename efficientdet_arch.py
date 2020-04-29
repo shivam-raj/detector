@@ -420,60 +420,115 @@ def build_backbone(features, config):
   return {0: features, 1: u1, 2: u2, 3: u3, 4: u4, 5: u5}
 
 
-def build_fpn(nodes,ends,id):
+def build_fpn(nodes,ends,id,index):
     i3, i4, i5, i6, i7 = 0, 1, 2, 3, 4
-    m6 = next(id)
-    nodes.append({
-        'feat_level': 6,
-        'inputs_offsets': [i6, i7]
-    })
+    if index%2==0:
+        m6 = next(id)
+        nodes.append({
+            'feat_level': 6,
+            'inputs_offsets': [i6, i7]
+        })
 
-    m5 = next(id)
-    nodes.append({
-        'feat_level': 5,
-        'inputs_offsets': [m6, i5]
-    })
+        m5 = next(id)
+        nodes.append({
+            'feat_level': 5,
+            'inputs_offsets': [m6, i5]
+        })
 
-    m4 = next(id)
-    nodes.append({
-        'feat_level': 4,
-        'inputs_offsets': [m5, i4]
-    })
+        m4 = next(id)
+        nodes.append({
+            'feat_level': 4,
+            'inputs_offsets': [m5, i4]
+        })
 
-    o3 = next(id)
-    ends['3'].append(o3)
-    nodes.append({
-        'feat_level': 3,
-        'inputs_offsets': [m4, i3]
-    })
+        o3 = next(id)
+        ends['3'].append(o3)
+        nodes.append({
+            'feat_level': 3,
+            'inputs_offsets': [m4, i3]
+        })
 
-    o4 = next(id)
-    ends['4'].append(o4)
-    nodes.append({
-        'feat_level': 4,
-        'inputs_offsets': [m4, o3, i4]
-    })
+        o4 = next(id)
+        ends['4'].append(o4)
+        nodes.append({
+            'feat_level': 4,
+            'inputs_offsets': [m4, o3, i4]
+        })
 
-    o5 = next(id)
-    ends['5'].append(o5)
-    nodes.append({
-        'feat_level': 5,
-        'inputs_offsets': [m5, o4, i5]
-    })
+        o5 = next(id)
+        ends['5'].append(o5)
+        nodes.append({
+            'feat_level': 5,
+            'inputs_offsets': [m5, o4, i5]
+        })
 
-    o6 = next(id)
-    ends['6'].append(o6)
-    nodes.append({
-        'feat_level': 6,
-        'inputs_offsets': [m6, o5, i6]
-    })
+        o6 = next(id)
+        ends['6'].append(o6)
+        nodes.append({
+            'feat_level': 6,
+            'inputs_offsets': [m6, o5, i6]
+        })
 
-    o7 = next(id)
-    ends['7'].append(o7)
-    nodes.append({
-        'feat_level': 7,
-        'inputs_offsets': [o6, i7]
-    })
+        o7 = next(id)
+        ends['7'].append(o7)
+        nodes.append({
+            'feat_level': 7,
+            'inputs_offsets': [o6, i7]
+        })
+
+    else:
+        m4 = next(id)
+        nodes.append({
+            'feat_level': 4,
+            'inputs_offsets': [i3, i4]
+        })
+
+        m5 = next(id)
+        nodes.append({
+            'feat_level': 5,
+            'inputs_offsets': [m4, i5]
+        })
+
+        m6 = next(id)
+        nodes.append({
+            'feat_level': 6,
+            'inputs_offsets': [m5, i6]
+        })
+
+        o7 = next(id)
+        ends['7'].append(o7)
+        nodes.append({
+            'feat_level': 7,
+            'inputs_offsets': [m6, i7]
+        })
+
+        o6 = next(id)
+        ends['6'].append(o6)
+        nodes.append({
+            'feat_level': 6,
+            'inputs_offsets': [m6, o7, i6]
+        })
+
+        o5 = next(id)
+        ends['5'].append(o5)
+        nodes.append({
+            'feat_level': 5,
+            'inputs_offsets': [m5, o6, i5]
+        })
+
+        o4 = next(id)
+        ends['4'].append(o4)
+        nodes.append({
+            'feat_level': 4,
+            'inputs_offsets': [m4, o5, i4]
+        })
+
+        o3 = next(id)
+        ends['3'].append(o3)
+        nodes.append({
+            'feat_level': 3,
+            'inputs_offsets': [o4, i3]
+        })
 
 
 def connect_fpn(nodes, ends):
@@ -550,11 +605,11 @@ def build_feature_network(features, config):
     id = count(5)
 
     ends = {
-        '3': list(),
-        '4': list(),
-        '5': list(),
-        '6': list(),
-        '7': list()
+        '3': [0],
+        '4': [1],
+        '5': [2],
+        '6': [3],
+        '7': [4]
     }
 
     for _ in range(config.fpn_cell_repeats):
