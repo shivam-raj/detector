@@ -618,10 +618,9 @@ def build_feature_network(features, config):
     nodes = list()
     id = count(5)
     base=range(5)
-    depth=config.fpn_cell_repeats //3 +1
-    for i in range(depth):
+    for i in range(config.fpn_depth):
         mount=build_base(base)
-        for j in range(config.fpn_cell_repeats):
+        for j in range(config.fpn_paths):
             build_fpn(base,nodes,mount,id,j)
         base=connect_fpn(nodes,mount,id)
     p = hparams_config.Config()

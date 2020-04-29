@@ -214,6 +214,8 @@ efficientdet_model_param_dict = {
             image_size=512,
             fpn_num_filters=64,
             fpn_cell_repeats=3,
+            fpn_paths=6,
+            fpn_depth=1,
             box_class_repeats=3,
         ),
     'efficientdet-d1':
@@ -223,6 +225,8 @@ efficientdet_model_param_dict = {
             image_size=640,
             fpn_num_filters=88,
             fpn_cell_repeats=4,
+            fpn_paths=8,
+            fpn_depth=1,
             box_class_repeats=3,
         ),
     'efficientdet-d2':
@@ -232,6 +236,8 @@ efficientdet_model_param_dict = {
             image_size=768,
             fpn_num_filters=112,
             fpn_cell_repeats=5,
+            fpn_paths=10,
+            fpn_depth=1,
             box_class_repeats=3,
         ),
     'efficientdet-d3':
@@ -241,6 +247,8 @@ efficientdet_model_param_dict = {
             image_size=896,
             fpn_num_filters=160,
             fpn_cell_repeats=6,
+            fpn_paths=10,
+            fpn_depth=1,
             box_class_repeats=4,
         ),
     'efficientdet-d4':
@@ -250,6 +258,8 @@ efficientdet_model_param_dict = {
             image_size=1024,
             fpn_num_filters=224,
             fpn_cell_repeats=7,
+            fpn_paths=6,
+            fpn_depth=2,
             box_class_repeats=4,
         ),
     'efficientdet-d5':
@@ -259,6 +269,8 @@ efficientdet_model_param_dict = {
             image_size=1280,
             fpn_num_filters=288,
             fpn_cell_repeats=7,
+            fpn_depth=2,
+            fpn_paths=6,
             box_class_repeats=4,
         ),
     'efficientdet-d6':
@@ -268,6 +280,8 @@ efficientdet_model_param_dict = {
             image_size=1280,
             fpn_num_filters=384,
             fpn_cell_repeats=8,
+            fpn_paths=8,
+            fpn_depth=2,
             box_class_repeats=5,
             fpn_name='bifpn_sum',  # Use unweighted sum for training stability.
         ),
@@ -279,6 +293,8 @@ efficientdet_model_param_dict = {
             fpn_num_filters=384,
             fpn_cell_repeats=8,
             box_class_repeats=5,
+            fpn_depth=2,
+            fpn_paths=12,
             anchor_scale=5.0,
             fpn_name='bifpn_sum',  # Use unweighted sum for training stability.
         ),
