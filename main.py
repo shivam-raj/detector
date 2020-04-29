@@ -285,15 +285,15 @@ def main(argv):
     # Also, disable use_bfloat16 for eval on CPU/GPU.
     eval_params = dict(
         params,
-        use_tpu=False,
+        use_tpu=True,
         input_rand_hflip=False,
         is_training_bn=False,
-        use_bfloat16=False,
+        use_bfloat16=True,
     )
 
     eval_estimator = tf.estimator.tpu.TPUEstimator(
         model_fn=model_fn_instance,
-        use_tpu=False,
+        use_tpu=True,
         train_batch_size=FLAGS.train_batch_size,
         eval_batch_size=FLAGS.eval_batch_size,
         config=run_config,
