@@ -420,8 +420,8 @@ def build_backbone(features, config):
   return {0: features, 1: u1, 2: u2, 3: u3, 4: u4, 5: u5}
 
 
-def build_fpn(nodes,ends,id,index):
-    i3, i4, i5, i6, i7 = 0, 1, 2, 3, 4
+def build_fpn(base,nodes,ends,id,index):
+    i3, i4, i5, i6, i7 = base[0], base[1], base[2], base[3], base[4]
     if index%2==0:
         m6 = next(id)
         nodes.append({
@@ -530,29 +530,43 @@ def build_fpn(nodes,ends,id,index):
             'inputs_offsets': [o4, i3]
         })
 
-
-def connect_fpn(nodes, ends):
+def connect_fpn(nodes, ends,id):
+    f3=next(id)
     nodes.append({
         'feat_level': 3,
         'inputs_offsets': ends['3']
     })
+    f4 = next(id)
     nodes.append({
         'feat_level': 4,
         'inputs_offsets': ends['4']
     })
+    f5 = next(id)
     nodes.append({
         'feat_level': 5,
         'inputs_offsets': ends['5']
     })
+    f6 = next(id)
     nodes.append({
         'feat_level': 6,
         'inputs_offsets': ends['6']
     })
+    f7 = next(id)
     nodes.append({
         'feat_level': 7,
         'inputs_offsets': ends['7']
     })
+    return f3,f4,f5,f6,f7
 
+def build_base(ends):
+    base = {
+        '3': [ends[0]],
+        '4': [ends[1]],
+        '5': [ends[2]],
+        '6': [ends[3]],
+        '7': [ends[4]]
+    }
+    return base
 
 def build_feature_network(features, config):
   """Build FPN input features.
@@ -603,19 +617,13 @@ def build_feature_network(features, config):
   with tf.variable_scope('fpn_cells'):
     nodes = list()
     id = count(5)
-
-    ends = {
-        '3': [0],
-        '4': [1],
-        '5': [2],
-        '6': [3],
-        '7': [4]
-    }
-
-    for _ in range(config.fpn_cell_repeats):
-        build_fpn(nodes,ends,id)
-    connect_fpn(nodes,ends)
-
+    base=range(5)
+    depth=config.fpn_cell_repeats //3 +1
+    for i in range(depth):
+        mount=build_base(base)
+        for j in range(config.fpn_cell_repeats):
+            build_fpn(base,nodes,mount,id,j)
+        base=connect_fpn(nodes,mount,id)
     p = hparams_config.Config()
     p.nodes =nodes
     p.weight_method = 'fastattn'
