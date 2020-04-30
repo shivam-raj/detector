@@ -172,6 +172,9 @@ def default_detection_configs():
   # enable bfloat
   h.use_bfloat16 = True
   h.use_tpu = True
+  h.fpn_depth = 1
+  h.fpn_paths = 6
+
 
   # For detection.
   h.box_class_repeats = 3
