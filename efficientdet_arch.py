@@ -488,22 +488,22 @@ def connect_fpn(nodes, ends,id):
     f4 = next(id)
     nodes.append({
         'feat_level': 4,
-        'inputs_offsets': ends['4']
+        'inputs_offsets': ends['4'].append(f3)
     })
     f5 = next(id)
     nodes.append({
         'feat_level': 5,
-        'inputs_offsets': ends['5']
+        'inputs_offsets': ends['5'].append(f4)
     })
     f6 = next(id)
     nodes.append({
         'feat_level': 6,
-        'inputs_offsets': ends['6']
+        'inputs_offsets': ends['6'].append(f5)
     })
     f7 = next(id)
     nodes.append({
         'feat_level': 7,
-        'inputs_offsets': ends['7']
+        'inputs_offsets': ends['7'].append(f6)
     })
     return f3,f4,f5,f6,f7
 
