@@ -450,33 +450,6 @@ def build_fpn(base,nodes,ends,id):
         'inputs_offsets': [m4, i3]
     })
 
-    n4 = next(id)
-    ends['4'].append(n4)
-    nodes.append({
-        'feat_level': 4,
-        'inputs_offsets': [i3, i4]
-    })
-
-    n5 = next(id)
-    ends['5'].append(n5)
-    nodes.append({
-        'feat_level': 5,
-        'inputs_offsets': [n4, i5]
-    })
-
-    n6 = next(id)
-    ends['6'].append(n6)
-    nodes.append({
-        'feat_level': 6,
-        'inputs_offsets': [n5, i6]
-    })
-
-    n7 = next(id)
-    ends['7'].append(n7)
-    nodes.append({
-        'feat_level': 7,
-        'inputs_offsets': [n6, i7]
-    })
 
 
 def connect_fpn(nodes, ends,id):
