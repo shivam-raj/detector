@@ -488,11 +488,11 @@ def build_feature_network(features, config):
   return new_feats
 
 
-def bifpn_config(weight_method='fastattn',quad_method='sum'):
+def bifpn_config(weight_method='sum',quad_method='fastattn'):
   """BiFPN config with sum."""
   p = hparams_config.Config()
-  p.weight_method = weight_method or 'fastattn'
-  p.quad_method = quad_method or 'sum'
+  p.weight_method = weight_method or 'sum'
+  p.quad_method = quad_method or 'fastattn'
   p.nodes = [
       {'feat_level': 6, 'inputs_offsets': [3, 4] , 'weight_method': p.weight_method},
       {'feat_level': 5, 'inputs_offsets': [2, 5], 'weight_method': p.weight_method},
@@ -523,8 +523,8 @@ def bifpn_config(weight_method='fastattn',quad_method='sum'):
 def bifpn_dynamic_config(min_level, max_level, weight_method,quad_method):
   """A dynamic bifpn config that can adapt to different min/max levels."""
   p = hparams_config.Config()
-  p.weight_method = weight_method or 'fastattn'
-  p.quad_method = quad_method or 'sum'
+  p.weight_method = weight_method or 'sum'
+  p.quad_method = quad_method or 'fastattn'
 
   # Node id starts from the input features and monotonically increase whenever
   # a new node is added. Here is an example for level P3 - P7:
