@@ -98,6 +98,7 @@ flags.DEFINE_string('testdev_dir', None,
 flags.DEFINE_integer('num_examples_per_epoch', 120000,
                      'Number of examples in one epoch')
 flags.DEFINE_integer('num_epochs', 15, 'Number of epochs for training')
+flags.DEFINE_integer('model', 0, 'Define model for training')
 flags.DEFINE_string('mode', 'train',
                     'Mode to run: train or eval (default: train)')
 flags.DEFINE_string('model_name', 'efficientdet-d1',
@@ -115,6 +116,15 @@ flags.DEFINE_integer(
 FLAGS = flags.FLAGS
 
 
+def mapper(model):
+    models={
+        0:'efficientdet-d0',
+        1: 'efficientdet-d1',
+        2: 'efficientdet-d2',
+    }
+    return models[model]
+
+
 def main(argv):
   del argv  # Unused.
 
@@ -127,6 +137,10 @@ def main(argv):
     tf.Session.reset(tpu_grpc_url)
   else:
     tpu_cluster_resolver = None
+
+  if FLAGS.model:
+      FLAGS.model_name=mapper(FLAGS.model)
+
 
   # Check data path
   if FLAGS.mode in ('train',
