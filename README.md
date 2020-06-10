@@ -11,7 +11,7 @@ Arxiv link: https://arxiv.org/abs/1911.09070
 <img src="image.png" />
 
 
-## 2. Pretrained EfficientDet Checkpoints with VFPN
+## 2. Pretrained ExtraDet
 
 We have provided a list of checkpoints and results as follows:
 
